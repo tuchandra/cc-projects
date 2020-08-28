@@ -1,0 +1,30 @@
+{
+    "manifest_version": 2,
+    "name": "CC CE Queues",
+    "version": "1.0",
+    "author": "Tushar Chandra",
+    "description": "Create a queue for leveling adoptables in the CE",
+    "permissions": [
+        "https://clickcritters.com/*"
+    ],
+    "content_scripts": [
+        {
+            "matches": [
+                "https://www.clickcritters.com/youradoptables.php?act=code&id=*"
+            ],
+            "js": [
+                "adoptables.js"
+            ],
+            "run_at": "document_start"
+        },
+        {
+            "matches": [
+                "https://www.clickcritters.com/clickexchange.php?act=doCE*"
+            ],
+            "js": [
+                "ce-queue.js"
+            ],
+            "run_at": "document_start"
+        }
+    ]
+}
