@@ -1,0 +1,21 @@
+{
+    "manifest_version": 2,
+    "name": "Click Forest Classic",
+    "version": "1.2",
+    "author": "Tushar Chandra",
+    "description": "Help find the critters in the Click Forest Classic",
+    "permissions": [
+        "https://clickcritters.com/*"
+    ],
+    "content_scripts": [
+        {
+            "matches": [
+                "https://www.clickcritters.com/clickforest_classic.php*"
+            ],
+            "js": [
+                "main.js"
+            ],
+            "run_at": "document_start"
+        }
+    ]
+}

@@ -1,0 +1,47 @@
+<html>
+  <head>
+    <title>Test</title>
+  </head>
+
+  <body>
+    <input
+      type="image"
+      src="https://www.clickcritters.com/images/games/clickforest_map.jpg"
+      style="padding: 5px"
+    />
+    <canvas
+      id="canvas"
+      width="260"
+      height="210"
+      style="
+        pointer-events: none;
+        z-index: 100;
+        position: relative;
+        top: -210px;
+        display: block;
+      "
+    />
+  </body>
+  <script>
+    const canvas = document.getElementById('canvas');
+    const move = { x: 100, y: 50, radius: { min: 40, max: 70 } };
+    const { x, y, radius } = move;
+    const padding = 5;
+
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+
+    ctx.beginPath();
+    ctx.arc(x + padding, y + padding, radius.min, 0, 2 * Math.PI);
+    ctx.stroke();
+    ctx.fill();
+    ctx.closePath();
+
+    // Draw outer circle and fill the inverse; we can exclude that, too
+    ctx.beginPath();
+    ctx.rect(0, 0, canvas.width, canvas.height);
+    ctx.arc(x + padding, y + padding, radius.max, 0, 2 * Math.PI, true);
+    ctx.fill();
+    ctx.closePath();
+  </script>
+</html>
