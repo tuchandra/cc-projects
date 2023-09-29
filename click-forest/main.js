@@ -50,23 +50,20 @@ window.addEventListener('DOMContentLoaded', main);
 /**
  * Some type definitions to help, I guess.
  *
- * @typedef {Record<string, [number, number?]>} Distances
- *
  * @typedef {{min: number, max?: number}} ConcentricRadii
+ * @typedef {Record<string, ConcentricRadii>} Distances
  * @typedef {{x: number, y: number, radius: ConcentricRadii, turns: string}} Move
  */
 
 /** @type {Distances} */
 const radii = {
-  'You are alone': [70, undefined],
-  'You can hear': [40, 70],
-  'You think you can see': [25, 40],
-  'You catch a glimpse': [7, 25],
+  'You are alone': { min: 70, max: undefined },
+  'You can hear': { min: 40, max: 70 },
+  'You think you can see': { min: 25, max: 40 },
+  'You catch a glimpse': { min: 7, max: 25 },
 };
 
-/**
- * @returns {Move | null}
- */
+/** @returns {Move | null} */
 function parseText() {
   const megaContent = document.getElementById('megaContent');
   if (!megaContent) return null;
@@ -87,14 +84,13 @@ function parseText() {
   // Then read the clue to find out how far we are from the prize
   const key = Object.keys(radii).find((key) => clueLine.includes(key));
   if (!key) return null;
-  const [min, max] = radii[key];
 
   // How many turns have we used?
   const turnsMatch = turnsLine.match(/You have used (\d+) \/ 15/);
   if (!turnsMatch) return null;
   const turns = turnsMatch[1];
 
-  return { x, y, radius: { min, max }, turns };
+  return { x, y, radius: radii[key], turns };
 }
 
 /**
@@ -108,16 +104,16 @@ function parseText() {
  */
 function drawCanvas(map) {
   const canvas = document.createElement('canvas');
-  const padding = 5;
-  const width = 250;
-  const height = 200;
+
+  const [padding, width, height] = [5, 250, 200];
+  const diagonal = Math.floor(70 / Math.SQRT2); // 49
 
   canvas.width = width + 2 * padding;
   canvas.height = height + 2 * padding;
 
   canvas.style.position = 'relative';
   canvas.style.display = 'block';
-  canvas.style.top = `-${canvas.height}px`;
+  canvas.style.top = `-${canvas.height + padding}px`;
   canvas.style.zIndex = '100';
   canvas.style.pointerEvents = 'none';
 
@@ -131,10 +127,10 @@ function drawCanvas(map) {
   ctx.setLineDash([5, 3]);
   ctx.beginPath();
   ctx.rect(
-    5 + 70 / Math.SQRT2,
-    5 + 70 / Math.SQRT2,
-    canvas.width - (2 * 70) / Math.SQRT2 - 2 * padding,
-    canvas.height - (2 * 70) / Math.SQRT2 - 2 * padding,
+    5 + diagonal,
+    5 + diagonal,
+    canvas.width - 2 * (diagonal + padding),
+    canvas.height - 2 * (diagonal + padding),
   );
   ctx.stroke();
   ctx.closePath();
