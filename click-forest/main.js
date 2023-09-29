@@ -157,7 +157,7 @@ function drawCircles(canvas, { x, y, radius }) {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
 
   // Draw inner circle & fill; we can exclude this area
   ctx.beginPath();
