@@ -68,9 +68,10 @@ const radii = {
  * @returns {Move | null}
  */
 function parseText() {
-  const textNodes = Array.from(
-    document.getElementById('megaContent').children[0].childNodes
-  )
+  const megaContent = document.getElementById('megaContent');
+  if (!megaContent) return null;
+
+  const textNodes = Array.from(megaContent.children[0].childNodes)
     .filter((x) => x.nodeName === '#text')
     .map((x) => x.textContent);
   const [searchLine, clueLine, turnsLine] = textNodes;
@@ -97,12 +98,22 @@ function parseText() {
 }
 
 /**
+ * Draw a canvas that overlays the map. Include guidelines s.t. if we click near a corner, and get
+ * "You are alone" (> 70 px), we make sure we eliminate the entire corner (instead of leaving the
+ * veeeeery edge of the corner as a possibility). If the radius (distance to the corner) is 70 px,
+ * then the side of the circle is 70 / sqrt(2) ~= 49.5 px.
+ *
+ * @param {HTMLElement} map
  * @returns {HTMLCanvasElement}
  */
-function drawCanvas() {
+function drawCanvas(map) {
   const canvas = document.createElement('canvas');
-  canvas.width = 260;
-  canvas.height = 210;
+  const padding = 5;
+  const width = 250;
+  const height = 200;
+
+  canvas.width = width + 2 * padding;
+  canvas.height = height + 2 * padding;
 
   canvas.style.position = 'relative';
   canvas.style.display = 'block';
@@ -111,8 +122,22 @@ function drawCanvas() {
   canvas.style.pointerEvents = 'none';
 
   // Find the map & append the canvas "after" (on top, really)
-  const map = document.getElementsByName('cf')[0]; // <input ... />
   map.parentNode.appendChild(canvas);
+
+  // Draw guidelines for where to click s.t. we exclude a corner
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return canvas;
+
+  ctx.setLineDash([5, 3]);
+  ctx.beginPath();
+  ctx.rect(
+    5 + 70 / Math.SQRT2,
+    5 + 70 / Math.SQRT2,
+    canvas.width - (2 * 70) / Math.SQRT2 - 2 * padding,
+    canvas.height - (2 * 70) / Math.SQRT2 - 2 * padding,
+  );
+  ctx.stroke();
+  ctx.closePath();
 
   return canvas;
 }
@@ -170,10 +195,14 @@ function updateMoves({ x, y, radius, turns }) {
 
 function main() {
   console.log('Hello from the CFC helper!');
+  const map = document.getElementsByName('cf')[0]; // <input ... />
+
+  if (!map) return setAndReturn([]);
+  const canvas = drawCanvas(map);
+
   const parsed = parseText();
   if (!parsed) return setAndReturn([]);
 
-  const canvas = drawCanvas();
   const moves = updateMoves(parsed);
   moves.forEach((move) => drawCircles(canvas, move));
 }
