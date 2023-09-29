@@ -3,6 +3,21 @@
   <head>
     <title>CC click forest demo</title>
     <script src="./main.js"></script>
+    <script>
+      onload = () => {
+        const canvas = document.getElementsByTagName('canvas')[0];
+        canvas.previousElementSibling.addEventListener('click', (ev) => {
+          const offsets = { margin: 8, padding: 5 };
+          const idx = (ev.x % 3) + 1;
+          drawCircles(canvas, {
+            x: ev.x - (offsets.margin + offsets.padding),
+            y: ev.y - (offsets.margin + offsets.padding),
+            radius: Object.values(radii)[idx], // not random, but oh well
+            turns: 'n/a',
+          });
+        });
+      };
+    </script>
   </head>
 
   <body>

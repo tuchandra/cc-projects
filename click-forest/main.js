@@ -157,7 +157,7 @@ function drawCircles(canvas, { x, y, radius }) {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
 
   // Draw inner circle & fill; we can exclude this area
   ctx.beginPath();
@@ -176,11 +176,13 @@ function drawCircles(canvas, { x, y, radius }) {
   ctx.closePath();
 }
 
+/** @param {any} x */
 function setAndReturn(x) {
   window.localStorage.setItem('moves', JSON.stringify(x));
   return x;
 }
 
+/** @param {Move} move  */
 function updateMoves({ x, y, radius, turns }) {
   const moves = [
     ...(JSON.parse(window.localStorage.getItem('moves')) || []),
