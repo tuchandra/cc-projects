@@ -19,7 +19,8 @@
         },
         {
             "matches": [
-                "https://www.clickcritters.com/clickexchange_gwoc.php*"
+                "https://www.clickcritters.com/clickexchange_gwoc.php*",
+                "https://www.clickcritters.com/feed/*"
             ],
             "js": [
                 "shortcuts.js"

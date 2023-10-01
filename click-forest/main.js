@@ -75,7 +75,7 @@ function parseText() {
   if (!searchLine || !clueLine || !turnsLine) return null;
 
   // First, parse the coordinates
-  const searchCoords = searchLine.match(/co-ordinates \((\d+), (\d+)\)/);
+  const searchCoords = searchLine.match(/co-ordinates \(-*(\d+), -*(\d+)\)/);
   if (!searchCoords) return null;
 
   const x = parseInt(searchCoords[1]);
