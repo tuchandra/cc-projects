@@ -1,7 +1,6 @@
 // @ts-check
-window.addEventListener('DOMContentLoaded', main);
 
-/** Type definitions for help when in VSCode
+/** Type definitions help when in VSCode
  * @typedef {{back: number, left: number, right: number}} ActionsMap
  * @typedef {Record<string, number>} Keycodes
  */
@@ -44,9 +43,15 @@ function clickLink(e) {
   // operationalize by looking at classes (on the main page, the first link is a plain <a>)
   const offset = document.links[0].classList.length ? 0 : 1;
 
-  // This supports both arrows and ijk keys because I use them interchangeably
-  ['back', 'left', 'right'].forEach((action, index) => {
-    if (e.keyCode === arrowActions[action]) {
+  // 'back' is always the first link
+  if ([arrowActions.back, ijkActions.back].includes(e.keyCode)) {
+    document.links[0].click();
+    return;
+  }
+
+  // otherwise, compute offset and click the answer; support left/right and j/k
+  ['left', 'right'].forEach((action, index) => {
+    if (e.keyCode === arrowActions[action] || e.keyCode === ijkActions[action]) {
       document.links[index + offset].click();
     }
   });
@@ -57,4 +62,8 @@ function clickLink(e) {
     if (feedLink) feedLink.click();
     return;
   }
+}
+
+if (window === top) {
+  window.addEventListener('keyup', clickLink, false);
 }
