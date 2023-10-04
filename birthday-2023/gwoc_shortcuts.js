@@ -38,7 +38,7 @@ const clickLink = (e) => {
   // otherwise, we're on the "Correct answer" page that shows the question first
   const offset = document.links[0].classList.length ? 0 : 1;
 
-  // the rest of thi scontains all the different shortcuts I used; I never had all of these
+  // the rest of this contains all the different shortcuts I used; I never had all of these
   // enabled at once because that would be insane; that said, keeping all of them here is
   // easier for this code being in an archive state
 
