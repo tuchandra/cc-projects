@@ -16,16 +16,45 @@ type Cell = {
   alt: string;
 };
 
-// Board state possibilities ...
-// - Size: 5x5, always
-// - Human position: [0-4, 0-4]
-// - Human turn: true/false
-// - Human turn is always first
-// - On a human turn, we can click on any cell in the same COLUMN
-// - On a puff turn, we cannot do anything
-//   (the puff will click on a cell in the same ROW, which becomes our position)
-// - UI can sometimes be corrupted and show the PUFF move as clickable (with borders &
-//   <a> child), but clicking it has no effect
+/**
+ * Board state modeling ...
+ *
+ * The board is a 5x5 grid. We are always somewhere on the grid, starting in the
+ * middle.
+ *
+ * Each square is exactly one of:
+ * - our current location
+ * - a cell that has been visited
+ * - a cell that has not been visited
+ *
+ * Each unvisited square has an integer score associated with it, between
+ * -4 and 4 and excluding 0.
+ *
+ * The game proceeds as:
+ * - Human moves first
+ * - On our turn, we can move to any unvisited cell in our *column*. The
+ *   cell's score is added to our score.
+ * - On Puff turn, it can move to any unvisited cell in its *row*. The
+ *   cell's score is added to the Puff's score.
+ * - On either, the game ends if there are no possible moves for the player
+ * - We win if our score > Puff's score (tie = Puff wins).
+ *
+ * We start in the middle of the board - (2, 2) when zero-indexed - with
+ * all four cells in the column visitable.
+ *
+ * |---|---|---|---|---|
+ * | X | X | ? | X | X |  <- ? = candidate move
+ * | X | X | ? | X | X |  <- ? = candidate move
+ * | X | X | * | X | X |  <- * = our position
+ * | X | X | ? | X | X |  <- ? = candidate move
+ * | X | X | ? | X | X |  <- ? = candidate move
+ * |---|---|---|---|---|
+ *
+ * Note that we can't rely on the UI to tell us which cells are visitable. The frontend
+ * state will sometimes get corrupted (when refreshing or resuming an in-progress game)
+ * and appear as if we can choose where to go on the Puff's turn (horizontally). This
+ * isn't actually the case, so we need to keep track of the board state ourselves.
+ */
 
 function getContent(): HTMLElement | null {
   const megaContent = document.getElementById('megaContent');
@@ -34,18 +63,13 @@ function getContent(): HTMLElement | null {
 
 function parseCell(td: HTMLTableCellElement): Cell | null {
   const img = td.querySelector('img');
-  if (!img) return null;
-
-  // Is it clickable?
-  const clickable = !!td.querySelector('a');
-
-  // Are we there?
-  const isHuman = img.src.includes('X.gif');
-
-  // What's the alt text?
-  const alt = img.alt || 'n/a';
-
-  const props = { clickable, isHuman, alt };
+  const props = img
+    ? {
+        clickable: !!td.querySelector('a'),
+        isHuman: img.src.includes('X.gif'),
+        alt: img.alt || 'n/a',
+      }
+    : null;
   console.log(`props`, props);
   return props;
 }
