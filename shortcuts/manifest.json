@@ -25,7 +25,7 @@
                 "https://www.clickcritters.com/clickforest.php*"
             ],
             "js": [ 
-                "click-forest.js"
+                "dist/main.js"
             ],
             "run_at": "document_start"
         }

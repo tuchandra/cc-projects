@@ -1,18 +1,12 @@
-// @ts-check
+/// <reference lib="dom" />
+/// <reference lib="dom.iterable" />
+
+console.log("Hello via Bun!");
 window.addEventListener('DOMContentLoaded', main);
 
-/**
- * Type definitions; these are entirely for VS Code because I can't be bothered
- * to set up a build pipeline and transpile a one-and-done browser extension.
- *
- *
- */
+type Board = string[][];
 
-/**
- * @param {boolean} debug
- * @returns {string[][] | null}
- */
-function parseBoard(debug = false) {
+function parseBoard(debug: boolean = false): Board | null {
   const megaContent = document.getElementById('megaContent');
   if (debug) console.log(`megaContent`, megaContent);
   if (!megaContent) return null;

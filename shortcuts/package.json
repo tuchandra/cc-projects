@@ -1,0 +1,19 @@
+{
+  "name": "shortcuts",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "scripts": {
+    "check": "bunx tsc",
+    "clean": "rm -rf dist/*",
+    "build": "bun build --target=browser ./index.ts --outfile=dist/main.js"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "typescript": "^5.2.2"
+  }
+}
