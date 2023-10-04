@@ -20,10 +20,9 @@
         {
             "matches": [
                 "https://www.clickcritters.com/clickexchange_gwoc.php*",
-                "https://www.clickcritters.com/feed/*"
             ],
             "js": [
-                "shortcuts.js"
+                "gwoc_shortcuts.js"
             ],
             "run_at": "document_start"
         }
