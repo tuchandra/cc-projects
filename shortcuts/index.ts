@@ -26,7 +26,7 @@ type ClickForest = {
   board: Board;
   position: Position;
   whoseTurn: Player | 'gameover';
-  scores: Record<Player, number>;
+  scores: { human: number; puff: number };
 };
 
 function isCellClickable(c: Cell): boolean {
