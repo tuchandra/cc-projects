@@ -74,9 +74,7 @@ function getContent(): [HTMLTableElement, HTMLTableElement] {
   const contentTables = document.getElementById('megaContent')?.querySelectorAll('table');
   const [tableBoard, tableScores] = Array.from(contentTables || [,]);
 
-  if (!tableBoard || !tableScores) {
-    throw new ParseError('Could not parse game state; this is probably fine.');
-  }
+  if (!tableBoard || !tableScores) throw new ParseError('Could not parse game state.');
 
   return [tableBoard, tableScores];
 }
