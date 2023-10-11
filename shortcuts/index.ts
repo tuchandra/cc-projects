@@ -1,9 +1,22 @@
 /// <reference lib="dom" />
 /// <reference lib="dom.iterable" />
 
-console.log('Hello via Bun!');
 window.addEventListener('DOMContentLoaded', main);
 
+class ParseError extends Error {}
+
+/**
+ * We can hardcode the fact that the Click Forest board is 5x5.
+ * The TypeScript compiler is smart enough to tell us about
+ * out-of-bounds errors, so let's take advantage of that.
+ */
+type FiveOf<T> = [T, T, T, T, T];
+type AltBoard = FiveOf<FiveOf<Cell>>;
+
+type Cell =
+  | { state: 'visited' }
+  | { state: 'currentPosition' }
+  | { state: 'unvisited'; value: number; clickable: boolean };
 type Board = Cell[][];
 type ClickForest = {
   board: Board;
@@ -12,10 +25,6 @@ type ClickForest = {
   humanScore: number;
   puffScore: number;
 };
-type Cell =
-  | { state: 'visited' }
-  | { state: 'currentPosition' }
-  | { state: 'unvisited'; value: number };
 
 /**
  * Board state modeling ...
@@ -57,39 +66,30 @@ type Cell =
  * isn't actually the case, so we need to keep track of the board state ourselves.
  */
 
-function getContent(): HTMLElement | null {
-  const megaContent = document.getElementById('megaContent');
-  return megaContent?.querySelector('center') || null;
+/**
+ * Parse the page content into the two tables that represent the game state: the board/map
+ * and the scores. Throw a ParseError on failure.
+ */
+function getContent(): [HTMLTableElement, HTMLTableElement] {
+  const contentTables = document.getElementById('megaContent')?.querySelectorAll('table');
+  if (!contentTables) throw new ParseError('Could not parse page content');
+
+  const [tableBoard, tableScores] = Array.from(contentTables);
+  if (!tableBoard || !tableScores) throw new ParseError('Could not find tables');
+
+  return [tableBoard, tableScores];
 }
 
 function parseBoardCell(td: HTMLTableCellElement): Cell {
   const img = td.querySelector('img');
-  // const isHuman = img?.src.includes('X.gif');
-  // const hasValue = Boolean(img?.alt);
 
   if (img?.src.includes('X.gif')) return { state: 'currentPosition' };
   if (!img?.alt) return { state: 'visited' };
-  return { state: 'unvisited', value: parseInt(img.alt) };
-
-  // const cellType = img?.src.includes('X.gif') ? 'human' : 'puff';
-
-  // const props = img
-  //   ? {
-  //       clickable: !!td.querySelector('a'),
-  //       isHuman: img.src.includes('X.gif'),
-  //       alt: img.alt || 'n/a',
-  //     }
-  //   : null;
-  // console.log(`props`, props);
-  // return props;
+  return { state: 'unvisited', value: parseInt(img.alt), clickable: !!td.querySelector('a') };
 }
 
 function parseGameState(debug: boolean = false): ClickForest | null {
-  const center = getContent();
-  const tables = center?.querySelectorAll('table');
-  if (!tables) return null;
-
-  const [tableBoard, tableScores] = Array.from(tables);
+  const [tableBoard, tableScores] = getContent();
 
   // The table has <tbody> (without header), five <tr> rows, and five <td> cells per row
   // Print the contents of each <td> cell, row-wise starting at the top
@@ -115,13 +115,23 @@ function parseGameState(debug: boolean = false): ClickForest | null {
   //
   const scores = Array.from(tableScores.querySelectorAll('td')).map((td) => td.innerText);
   const [humanScore, puffScore] = scores.map((s) => parseInt(s));
-  if (debug) console.log(`scores`, scores);
   if (!scores) return null;
 
   // Stupid way to get the current position
   // Map board to each row & then col, see if it has state: currentPosition
   const position = findCurrentPosition(board);
-  return { board: board, humanTurn: true, humanScore, puffScore, position };
+
+  // humanTurn = true if the cells in the same column are clickable
+  const humanTurn = board.every((row) => {
+    const cell = row[position[1]];
+    return (
+      (cell.state === 'unvisited' && cell.clickable) ||
+      cell.state === 'currentPosition' ||
+      cell.state === 'visited'
+    );
+  });
+
+  return { board: board, humanTurn, humanScore, puffScore, position };
 }
 
 function findCurrentPosition(board: Cell[][]): [number, number] {
@@ -138,6 +148,10 @@ function findCurrentPosition(board: Cell[][]): [number, number] {
 }
 
 function main() {
-  const b = parseGameState(true);
-  console.log(b);
+  try {
+    const b = parseGameState(true);
+    console.log(b);
+  } catch (e) {
+    console.debug(e);
+  }
 }
