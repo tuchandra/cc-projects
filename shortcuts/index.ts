@@ -41,14 +41,16 @@ function findCurrentPosition(board: Board): Position {
   return position;
 }
 
-/** Is this the human's turn? Decide based on board & current position. */
+/**
+ * Is this the human's turn? Decide based on board & current position.
+ * (If the cells in the same column are clickable - or unvisitable - then yes.)
+ */
 function isHumanTurn({ board, position }: { board: Board; position: Position }): boolean {
   return board.every((row) => {
     const cell = row[position[1]];
     return (
-      (cell.state === 'unvisited' && cell.clickable) ||
-      cell.state === 'currentPosition' ||
-      cell.state === 'visited'
+      ['currentPosition', 'visited'].includes(cell.state) ||
+      (cell.state === 'unvisited' && cell.clickable)
     );
   });
 }
@@ -143,11 +145,7 @@ function parseGameState(debug: boolean = false): ClickForest | null {
   const [humanScore, puffScore] = scores.map((s) => parseInt(s));
   if (!scores) return null;
 
-  // Stupid way to get the current position
-  // Map board to each row & then col, see if it has state: currentPosition
   const position = findCurrentPosition(board);
-
-  // humanTurn = true if the cells in the same column are clickable
   const humanTurn = isHumanTurn({ board, position });
 
   return { board: board, humanTurn, humanScore, puffScore, position };
