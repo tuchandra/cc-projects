@@ -72,10 +72,11 @@ type ClickForest = {
  */
 function getContent(): [HTMLTableElement, HTMLTableElement] {
   const contentTables = document.getElementById('megaContent')?.querySelectorAll('table');
-  if (!contentTables) throw new ParseError('Could not parse page content');
+  const [tableBoard, tableScores] = Array.from(contentTables || [,]);
 
-  const [tableBoard, tableScores] = Array.from(contentTables);
-  if (!tableBoard || !tableScores) throw new ParseError('Could not find tables');
+  if (!tableBoard || !tableScores) {
+    throw new ParseError('Could not parse game state; this is probably fine.');
+  }
 
   return [tableBoard, tableScores];
 }
