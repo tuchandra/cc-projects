@@ -14,9 +14,10 @@ type FiveOf<T> = [T, T, T, T, T];
 type AltBoard = FiveOf<FiveOf<Cell>>;
 
 type Position = [number, number];
+type CellState = 'currentPosition' | 'visited' | 'unvisited';
 type Cell =
-  | { state: 'visited' }
   | { state: 'currentPosition' }
+  | { state: 'visited' }
   | { state: 'unvisited'; value: number; clickable: boolean };
 type Board = Cell[][];
 type ClickForest = {
@@ -45,11 +46,12 @@ function findCurrentPosition(board: Board): Position {
  * Is this the human's turn? Decide based on board & current position.
  * (If the cells in the same column are clickable - or unvisitable - then yes.)
  */
-function isHumanTurn({ board, position }: { board: Board; position: Position }): boolean {
+function isHumanTurn({ board, position: [_, col] }: { board: Board; position: Position }): boolean {
   return board.every((row) => {
-    const cell = row[position[1]];
+    const cell = row[col];
     return (
-      ['currentPosition', 'visited'].includes(cell.state) ||
+      cell.state === 'currentPosition' ||
+      cell.state === 'visited' ||
       (cell.state === 'unvisited' && cell.clickable)
     );
   });
@@ -108,11 +110,19 @@ function getContent(): [HTMLTableElement, HTMLTableElement] {
   return [tableBoard, tableScores];
 }
 
+/**
+ * Parse a <td> cell into the Cell struct that it represents in the game.
+ * It should always have an image, which is either:
+ * - X.gif: a picture of the human / where we currently are
+ * - no alt text: a visited cell
+ * - a number with alt text: the score of the cell
+ */
 function parseBoardCell(td: HTMLTableCellElement): Cell {
   const img = td.querySelector('img');
+  if (!img) throw new ParseError(`Board cell doesn't have an image; what?`);
 
-  if (img?.src.includes('X.gif')) return { state: 'currentPosition' };
-  if (!img?.alt) return { state: 'visited' };
+  if (img.src.includes('X.gif')) return { state: 'currentPosition' };
+  if (!img.alt) return { state: 'visited' };
   return { state: 'unvisited', value: parseInt(img.alt), clickable: !!td.querySelector('a') };
 }
 
