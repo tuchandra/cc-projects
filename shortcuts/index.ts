@@ -25,9 +25,13 @@ type Board = Cell[][];
 type ClickForest = {
   board: Board;
   position: Position;
-  whoseTurn: Player;
+  whoseTurn: Player | 'gameover';
   scores: Record<Player, number>;
 };
+
+function isCellClickable(c: Cell): boolean {
+  return c.state === 'unvisited' && c.clickable;
+}
 
 /** Find the current position on the board. */
 function findCurrentPosition(board: Board): Position {
@@ -44,18 +48,31 @@ function findCurrentPosition(board: Board): Position {
 }
 
 /**
- * Is this the human's turn? Decide based on board & current position.
- * (If the cells in the same column are clickable - or unvisitable - then yes.)
+ * Evaluate the current turn: whose turn is it? Or is the game over?
+ *
+ * First, check if the human can make a move; this is equivalent to
+ * the column having at least one clickable (& necessarily unvisited) cell
+ *
+ * Then, check if the puff can make a move; this is equivalent to the
+ * row having at least one unvisited cell (but these aren't clickable
+ * because we do not control the puff).
+ *
+ * Otherwise, it's game over; neither player can move.
  */
-function isHumanTurn({ board, position: [_, col] }: { board: Board; position: Position }): boolean {
-  return board.every((row) => {
-    const cell = row[col];
-    return (
-      cell.state === 'currentPosition' ||
-      cell.state === 'visited' ||
-      (cell.state === 'unvisited' && cell.clickable)
-    );
-  });
+function getTurnType({
+  board,
+  position: [currentRow, currentCol],
+}: {
+  board: Board;
+  position: Position;
+}): 'human' | 'puff' | 'gameover' {
+  // Does the human have available moves? If there is an unvisited, clickable cell in the column - yes.
+  const humanCanMove = board.some((row) => isCellClickable(row[currentCol]));
+  if (humanCanMove) return 'human';
+
+  // Does the Puff have any moves remaining?
+  const puffCanMove = board[currentRow].some((cell) => cell.state === 'unvisited');
+  return puffCanMove ? 'puff' : 'gameover';
 }
 
 /**
@@ -162,10 +179,10 @@ function getGameState(debug: boolean = false): ClickForest | null {
 
   const board = parseGameBoard(tableBoard);
   const position = findCurrentPosition(board);
-  const humanTurn = isHumanTurn({ board, position }) ? 'human' : 'puff';
+  const turnType = getTurnType({ board, position });
   const scores = parseScores(tableScores);
 
-  return { board: board, whoseTurn: humanTurn, scores, position };
+  return { board: board, whoseTurn: turnType, scores, position };
 }
 
 function main() {
@@ -173,6 +190,7 @@ function main() {
     const b = getGameState(true);
     console.log(b);
   } catch (e) {
-    console.debug(e);
+    if (e instanceof ParseError) return;
+    throw e;
   }
 }
