@@ -4,17 +4,18 @@
 console.log('Hello via Bun!');
 window.addEventListener('DOMContentLoaded', main);
 
-type Board = string[][];
+type Board = Cell[][];
 type ClickForest = {
   board: Board;
   position: [number, number];
   humanTurn: boolean;
+  humanScore: number;
+  puffScore: number;
 };
-type Cell = {
-  clickable: boolean;
-  isHuman: boolean;
-  alt: string;
-};
+type Cell =
+  | { state: 'visited' }
+  | { state: 'currentPosition' }
+  | { state: 'unvisited'; value: number };
 
 /**
  * Board state modeling ...
@@ -61,20 +62,29 @@ function getContent(): HTMLElement | null {
   return megaContent?.querySelector('center') || null;
 }
 
-function parseBoardCell(td: HTMLTableCellElement): Cell | null {
+function parseBoardCell(td: HTMLTableCellElement): Cell {
   const img = td.querySelector('img');
-  const props = img
-    ? {
-        clickable: !!td.querySelector('a'),
-        isHuman: img.src.includes('X.gif'),
-        alt: img.alt || 'n/a',
-      }
-    : null;
-  console.log(`props`, props);
-  return props;
+  // const isHuman = img?.src.includes('X.gif');
+  // const hasValue = Boolean(img?.alt);
+
+  if (img?.src.includes('X.gif')) return { state: 'currentPosition' };
+  if (!img?.alt) return { state: 'visited' };
+  return { state: 'unvisited', value: parseInt(img.alt) };
+
+  // const cellType = img?.src.includes('X.gif') ? 'human' : 'puff';
+
+  // const props = img
+  //   ? {
+  //       clickable: !!td.querySelector('a'),
+  //       isHuman: img.src.includes('X.gif'),
+  //       alt: img.alt || 'n/a',
+  //     }
+  //   : null;
+  // console.log(`props`, props);
+  // return props;
 }
 
-function parseBoard(debug: boolean = false): Board | null {
+function parseGameState(debug: boolean = false): ClickForest | null {
   const center = getContent();
   const tables = center?.querySelectorAll('table');
   if (!tables) return null;
@@ -90,22 +100,44 @@ function parseBoard(debug: boolean = false): Board | null {
   if (debug) console.log(`cells`, cells);
   if (!cells) return null;
 
-  const board = cells.map((row) => row.map(parseBoardCell).map((x) => x?.alt || 'n/a'));
+  const board = cells.map((row) => row.map(parseBoardCell));
   if (debug) console.log(`board`, board);
   if (!board) return null;
 
-  // The scores table has just two rows & two columns
+  // The scores table has just two rows & two columns, and we can use
+  // querySelectorAll to get the text content of the first two cells.
+  //
+  // +-----+---------+
   // |  0  |    0    |
+  // +-----+---------+
   // | You | Critter |
-  // We can use querySelectorAll and take the first two scores
+  // +-----+---------+
+  //
   const scores = Array.from(tableScores.querySelectorAll('td')).map((td) => td.innerText);
+  const [humanScore, puffScore] = scores.map((s) => parseInt(s));
   if (debug) console.log(`scores`, scores);
   if (!scores) return null;
 
-  return board;
+  // Stupid way to get the current position
+  // Map board to each row & then col, see if it has state: currentPosition
+  const position = findCurrentPosition(board);
+  return { board: board, humanTurn: true, humanScore, puffScore, position };
+}
+
+function findCurrentPosition(board: Cell[][]): [number, number] {
+  let position: [number, number] | undefined;
+  for (let i = 0; i < board.length; i++) {
+    for (let j = 0; j < board[0].length; j++) {
+      if (board[i][j].state === 'currentPosition') {
+        position = [i, j];
+      }
+    }
+  }
+  if (!position) throw new Error('Could not find current position');
+  return position;
 }
 
 function main() {
-  const b = parseBoard(true);
+  const b = parseGameState(true);
   console.log(b);
 }

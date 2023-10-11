@@ -6,14 +6,17 @@
     "bun-types": "latest"
   },
   "scripts": {
+    "install-real": "bun i --force",
     "check": "bunx tsc",
+    "check:watch": "bunx tsc --watch",
     "clean": "rm -rf dist/*",
     "build": "bun build --target=browser ./index.ts --outfile=dist/main.js"
   },
   "peerDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "^5.2.0"
   },
   "dependencies": {
     "typescript": "^5.2.2"
-  }
+  },
+  "trustedDependencies": ["typescript"]
 }
