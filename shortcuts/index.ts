@@ -26,7 +26,7 @@ type ClickForest = {
   board: Board;
   position: Position;
   whoseTurn: Player | 'gameover';
-  scores: { human: number; puff: number };
+  scores: { [k in Player]: number };
 };
 
 function isCellClickable(c: Cell): boolean {
@@ -167,7 +167,7 @@ function parseGameBoard(table: HTMLTableElement): Board {
  *
  * The first cell is the human score, the second is the puff score.
  */
-function parseScores(table: HTMLTableElement): Record<Player, number> {
+function parseScores(table: HTMLTableElement): { [k in Player]: number } {
   const scores = Array.from(table.querySelectorAll('td')).map((td) => td.innerText);
   const [humanScore, puffScore] = scores.map((s) => parseInt(s));
   if (!scores) throw new ParseError('Could not parse scores.');
