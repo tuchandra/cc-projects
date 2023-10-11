@@ -43,11 +43,11 @@ type Cell = {
  * all four cells in the column visitable.
  *
  * |---|---|---|---|---|
- * | X | X | ? | X | X |  <- ? = candidate move
+ * | X | X | ? | X | X |  <- ? = ...
  * | X | X | ? | X | X |  <- ? = candidate move
  * | X | X | * | X | X |  <- * = our position
  * | X | X | ? | X | X |  <- ? = candidate move
- * | X | X | ? | X | X |  <- ? = candidate move
+ * | X | X | ? | X | X |  <- ? = ...
  * |---|---|---|---|---|
  *
  * Note that we can't rely on the UI to tell us which cells are visitable. The frontend
@@ -61,7 +61,7 @@ function getContent(): HTMLElement | null {
   return megaContent?.querySelector('center') || null;
 }
 
-function parseCell(td: HTMLTableCellElement): Cell | null {
+function parseBoardCell(td: HTMLTableCellElement): Cell | null {
   const img = td.querySelector('img');
   const props = img
     ? {
@@ -76,21 +76,31 @@ function parseCell(td: HTMLTableCellElement): Cell | null {
 
 function parseBoard(debug: boolean = false): Board | null {
   const center = getContent();
-  const table = center?.querySelector('table');
-  if (!table) return null;
+  const tables = center?.querySelectorAll('table');
+  if (!tables) return null;
+
+  const [tableBoard, tableScores] = Array.from(tables);
 
   // The table has <tbody> (without header), five <tr> rows, and five <td> cells per row
   // Print the contents of each <td> cell, row-wise starting at the top
-  const rows = Array.from(table.querySelectorAll('tr'));
+  const rows = Array.from(tableBoard.querySelectorAll('tr'));
   if (!rows) return null;
 
   const cells: HTMLTableCellElement[][] = rows.map((row) => Array.from(row.querySelectorAll('td')));
   if (debug) console.log(`cells`, cells);
   if (!cells) return null;
 
-  const board = cells.map((row) => row.map(parseCell).map((x) => x?.alt || 'n/a'));
+  const board = cells.map((row) => row.map(parseBoardCell).map((x) => x?.alt || 'n/a'));
   if (debug) console.log(`board`, board);
   if (!board) return null;
+
+  // The scores table has just two rows & two columns
+  // |  0  |    0    |
+  // | You | Critter |
+  // We can use querySelectorAll and take the first two scores
+  const scores = Array.from(tableScores.querySelectorAll('td')).map((td) => td.innerText);
+  if (debug) console.log(`scores`, scores);
+  if (!scores) return null;
 
   return board;
 }
