@@ -13,6 +13,8 @@ class ParseError extends Error {}
 type FiveOf<T> = [T, T, T, T, T];
 type AltBoard = FiveOf<FiveOf<Cell>>;
 
+type Player = 'human' | 'puff';
+
 type Position = [number, number];
 type CellState = 'currentPosition' | 'visited' | 'unvisited';
 type Cell =
@@ -23,9 +25,8 @@ type Board = Cell[][];
 type ClickForest = {
   board: Board;
   position: Position;
-  humanTurn: boolean;
-  humanScore: number;
-  puffScore: number;
+  whoseTurn: Player;
+  scores: Record<Player, number>;
 };
 
 /** Find the current position on the board. */
@@ -126,44 +127,50 @@ function parseBoardCell(td: HTMLTableCellElement): Cell {
   return { state: 'unvisited', value: parseInt(img.alt), clickable: !!td.querySelector('a') };
 }
 
-function parseGameState(debug: boolean = false): ClickForest | null {
+/**
+ * The table has <tbody> (without header), five <tr> rows, and five <td> cells per row
+ * Parse the contents of each <td> into a Cell.
+ */
+function parseGameBoard(table: HTMLTableElement): Board {
+  const tableRows = Array.from(table.querySelectorAll('tr'));
+  const tableDatas = tableRows.map((row) => Array.from(row.querySelectorAll('td')));
+
+  return tableDatas.map((td) => td.map(parseBoardCell));
+}
+
+/**
+ * The scores table has just two rows & two columns, and we can use
+ * querySelectorAll to get the text content of the first two cells.
+ *
+ * +-----+---------+
+ * |  0  |    0    |
+ * +-----+---------+
+ * | You | Critter |
+ * +-----+---------+
+ *
+ * The first cell is the human score, the second is the puff score.
+ */
+function parseScores(table: HTMLTableElement): Record<Player, number> {
+  const scores = Array.from(table.querySelectorAll('td')).map((td) => td.innerText);
+  const [humanScore, puffScore] = scores.map((s) => parseInt(s));
+  if (!scores) throw new ParseError('Could not parse scores.');
+  return { human: humanScore, puff: puffScore };
+}
+
+function getGameState(debug: boolean = false): ClickForest | null {
   const [tableBoard, tableScores] = getContent();
 
-  // The table has <tbody> (without header), five <tr> rows, and five <td> cells per row
-  // Print the contents of each <td> cell, row-wise starting at the top
-  const rows = Array.from(tableBoard.querySelectorAll('tr'));
-  if (!rows) return null;
-
-  const cells: HTMLTableCellElement[][] = rows.map((row) => Array.from(row.querySelectorAll('td')));
-  if (debug) console.log(`cells`, cells);
-  if (!cells) return null;
-
-  const board = cells.map((row) => row.map(parseBoardCell));
-  if (debug) console.log(`board`, board);
-  if (!board) return null;
-
-  // The scores table has just two rows & two columns, and we can use
-  // querySelectorAll to get the text content of the first two cells.
-  //
-  // +-----+---------+
-  // |  0  |    0    |
-  // +-----+---------+
-  // | You | Critter |
-  // +-----+---------+
-  //
-  const scores = Array.from(tableScores.querySelectorAll('td')).map((td) => td.innerText);
-  const [humanScore, puffScore] = scores.map((s) => parseInt(s));
-  if (!scores) return null;
-
+  const board = parseGameBoard(tableBoard);
   const position = findCurrentPosition(board);
-  const humanTurn = isHumanTurn({ board, position });
+  const humanTurn = isHumanTurn({ board, position }) ? 'human' : 'puff';
+  const scores = parseScores(tableScores);
 
-  return { board: board, humanTurn, humanScore, puffScore, position };
+  return { board: board, whoseTurn: humanTurn, scores, position };
 }
 
 function main() {
   try {
-    const b = parseGameState(true);
+    const b = getGameState(true);
     console.log(b);
   } catch (e) {
     console.debug(e);
