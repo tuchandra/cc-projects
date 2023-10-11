@@ -13,6 +13,7 @@ class ParseError extends Error {}
 type FiveOf<T> = [T, T, T, T, T];
 type AltBoard = FiveOf<FiveOf<Cell>>;
 
+type Position = [number, number];
 type Cell =
   | { state: 'visited' }
   | { state: 'currentPosition' }
@@ -20,11 +21,37 @@ type Cell =
 type Board = Cell[][];
 type ClickForest = {
   board: Board;
-  position: [number, number];
+  position: Position;
   humanTurn: boolean;
   humanScore: number;
   puffScore: number;
 };
+
+/** Find the current position on the board. */
+function findCurrentPosition(board: Board): Position {
+  let position: Position | undefined;
+  for (let i = 0; i < board.length; i++) {
+    for (let j = 0; j < board[0].length; j++) {
+      if (board[i][j].state === 'currentPosition') {
+        position = [i, j];
+      }
+    }
+  }
+  if (!position) throw new Error('Could not find current position');
+  return position;
+}
+
+/** Is this the human's turn? Decide based on board & current position. */
+function isHumanTurn({ board, position }: { board: Board; position: Position }): boolean {
+  return board.every((row) => {
+    const cell = row[position[1]];
+    return (
+      (cell.state === 'unvisited' && cell.clickable) ||
+      cell.state === 'currentPosition' ||
+      cell.state === 'visited'
+    );
+  });
+}
 
 /**
  * Board state modeling ...
@@ -121,29 +148,9 @@ function parseGameState(debug: boolean = false): ClickForest | null {
   const position = findCurrentPosition(board);
 
   // humanTurn = true if the cells in the same column are clickable
-  const humanTurn = board.every((row) => {
-    const cell = row[position[1]];
-    return (
-      (cell.state === 'unvisited' && cell.clickable) ||
-      cell.state === 'currentPosition' ||
-      cell.state === 'visited'
-    );
-  });
+  const humanTurn = isHumanTurn({ board, position });
 
   return { board: board, humanTurn, humanScore, puffScore, position };
-}
-
-function findCurrentPosition(board: Cell[][]): [number, number] {
-  let position: [number, number] | undefined;
-  for (let i = 0; i < board.length; i++) {
-    for (let j = 0; j < board[0].length; j++) {
-      if (board[i][j].state === 'currentPosition') {
-        position = [i, j];
-      }
-    }
-  }
-  if (!position) throw new Error('Could not find current position');
-  return position;
 }
 
 function main() {
